@@ -4,14 +4,17 @@
             <v-btn :disabled="loading" append-icon="mdi-refresh" text="Refresh" variant="outlined"
                 @click="onClick"></v-btn>
         </div>
-        <v-text-field class="mb-4" v-model="search" density="compact" label="Filtrar Categoria" prepend-inner-icon="mdi-magnify"
-            variant="solo-filled" flat hide-details single-line></v-text-field>
+        <v-text-field class="mb-4" v-model="search" density="compact" label="Filtrar Categoria"
+            prepend-inner-icon="mdi-magnify" variant="solo-filled" flat hide-details single-line></v-text-field>
         <div class="d-flex justify-center mb-4 ga-16">
-            <v-text-field class="mb-4 w-25" v-model="from" density="compact" label="Precio Desde" prepend-inner-icon="mdi-magnify"
-                variant="solo-filled" flat hide-details single-line></v-text-field>
-            <v-text-field class="mb-4 w-25" v-model="to" density="compact" label="Precio Hasta" prepend-inner-icon="mdi-magnify"
-                variant="solo-filled" flat hide-details single-line></v-text-field>
+            <v-text-field class="mb-4 w-25" v-model="from" density="compact" label="Precio Desde"
+                prepend-inner-icon="mdi-magnify" variant="solo-filled" flat hide-details single-line></v-text-field>
+            <v-text-field class="mb-4 w-25" v-model="to" density="compact" label="Precio Hasta"
+                prepend-inner-icon="mdi-magnify" variant="solo-filled" flat hide-details single-line></v-text-field>
         </div>
+        <v-select v-model="selectedRange" :items="ratingRanges" :item-title="item => item.text"
+            :item-value="item => item" label="Filtrar por Puntuación" variant="solo-filled" flat density="compact"
+            hide-details></v-select>
 
         <v-data-table :headers="headers" :items="filteredProducts" :items-per-page="5" v-model:sort-by="sortBy"
             :filter-keys="['categoria']" v-model:search="search" v-model:from="from" :loading="loading">
@@ -21,15 +24,15 @@
                     <td>{{ item.categoria }}</td>
                     <td>
                         <span v-if="item.precio > 500">
-                            <v-chip  :color="getColor(item.precio)">
-                            {{ item.precio }} €
-                        </v-chip>
+                            <v-chip :color="getColor(item.precio)">
+                                {{ item.precio }} €
+                            </v-chip>
                         </span>
                         <span v-else>
                             {{ item.precio }} €
                         </span>
-                        
-                        
+
+
                     </td>
                     <td>{{ item.puntuacion }}</td>
                 </tr>
@@ -51,6 +54,14 @@ export default {
             search: '',
             from: '',
             to: '',
+            ratingRanges: [
+                { text: '0 a 1', min: 0, max: 1 },
+                { text: '1 a 2', min: 1, max: 2 },
+                { text: '2 a 3', min: 2, max: 3 },
+                { text: '3 a 4', min: 3, max: 4 },
+                { text: '4 a 5', min: 4, max: 5 }
+            ],
+            selectedRange: null,
             headers: [
                 { title: 'Nombre', value: 'name', sortable: true, key: 'nombre' },
                 { title: 'Categoria', value: 'categoria', sortable: true, key: 'categoria' },
@@ -65,9 +76,13 @@ export default {
             return this.products.filter(item => {
                 const fromCondition = this.from ? item.precio >= this.from : true;
                 const toCondition = this.to ? item.precio <= this.to : true;
-                return fromCondition && toCondition;
+                const rangeCondition = this.selectedRange
+                    ? item.puntuacion >= this.selectedRange.min && item.puntuacion < this.selectedRange.max
+                    : true;
+                return fromCondition && toCondition && rangeCondition;
             });
         }
+
     },
     async mounted() {
         this.getProducts()
